@@ -28,11 +28,23 @@ class MultiHeadAttention(nn.Module):
         self.qkv_proj = nn.Linear(embed_dim, 3 * embed_dim) # create query, key, and value vector for each token
         self.out_proj = nn.Linear(embed_dim, embed_dim)     # mix information of head outputs
 
-    def forward(self, x):                                                   # (B, T, D)
+    def forward(self, x):                                                   # (B, T, embed_dim)
         B, T, D = x.shape
-        qkv = self.qkv_proj(x)                                              # (B, T, 3*D)
-        qkv = qkv.view(B, T, 3, self.heads, self.head_dim).transpose(1, 3)  # (B, H, T, 3, HD)
-        q, k, v = qkv.unbind(dim=3)                                         # (B, H, T, HD)
-        attn = F.scaled_dot_product_attention(q, k, v, is_causal=False)     # (B, H, T, HD)
-        attn = attn.transpose(1, 2).reshape(B, T, D)                        # (B, T, D)
-        return self.out_proj(attn)                                          # (B, T, D)
+        qkv = self.qkv_proj(x)                                              # (B, T, 3*embed_dim)
+        qkv = qkv.view(B, T, 3, self.heads, self.head_dim).transpose(1, 3)  # (B, heads, T, 3, head_dim)
+        q, k, v = qkv.unbind(dim=3)                                         # (B, heads, T, head_dim)
+        attn = F.scaled_dot_product_attention(q, k, v, is_causal=False)     # (B, heads, T, head_dim)
+        attn = attn.transpose(1, 2).reshape(B, T, D)                        # (B, T, embed_dim)
+        return self.out_proj(attn)                                          # (B, T, embed_dim)
+    
+class MLP(nn.Module):
+    def __init__(self, dim, hidden_dim):
+        super().__init__()
+        self.linear1 = nn.Linear(dim, hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim, dim)
+        self.act = nn.GELU()
+    
+    def forward(self, x):               # (B, T, dim)
+        x = self.act(self.linear1(x))   # (B, T, hidden_dim)
+        return self.linear2(x)          # (B, T, dim)
+    
