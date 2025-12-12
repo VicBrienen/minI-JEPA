@@ -38,13 +38,26 @@ class MultiHeadAttention(nn.Module):
         return self.out_proj(attn)                                          # (B, T, embed_dim)
     
 class MLP(nn.Module):
-    def __init__(self, dim, hidden_dim):
+    def __init__(self, embed_dim, hidden_dim):
         super().__init__()
-        self.linear1 = nn.Linear(dim, hidden_dim)
-        self.linear2 = nn.Linear(hidden_dim, dim)
+        self.linear1 = nn.Linear(embed_dim, hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim, embed_dim)
         self.act = nn.GELU()
     
     def forward(self, x):               # (B, T, dim)
         x = self.act(self.linear1(x))   # (B, T, hidden_dim)
-        return self.linear2(x)          # (B, T, dim)
-    
+        x = self.linear2(x)             # (B, T, dim)
+        return x
+
+class TransformerBlock(nn.Module):
+    def __init__(self, embed_dim, heads, mlp_ratio):
+        super().__init__()
+        self.norm1 = nn.LayerNorm(embed_dim)
+        self.mha = MultiHeadAttention(embed_dim, heads)
+        self.norm2 = nn.LayerNorm(embed_dim)
+        self.mlp = MLP(embed_dim, int(mlp_ratio * embed_dim))
+
+    def forward(self, x): # (B, T, embed_dim)
+        x = x + self.mha(self.norm1(x))
+        x = x + self.mlp(self.norm2(x))
+        return x # (B, T, embed_dim)
