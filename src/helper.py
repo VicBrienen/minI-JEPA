@@ -11,3 +11,19 @@ def get_1d_pos_embed(embed_dim, positions):
 
     # apply sin and cos to form positional embedding
     return torch.cat([torch.sin(out), torch.cos(out)], dim=1)
+
+def get_2d_pos_embed(embed_dim, grid_size):
+    # evenly between height and width
+    assert embed_dim % 2 == 0
+    grid_coords = torch.arange(grid_size, dtype=torch.float32)
+
+    # create 2d grid
+    grid_h, grid_w = torch.meshgrid(grid_coords, grid_coords, indexing="ij")
+    grid = torch.stack([grid_h, grid_w]).reshape(2, -1)
+
+    # encode height and width seperately
+    emb_h = get_1d_pos_embed(embed_dim // 2, grid[0])
+    emb_w = get_1d_pos_embed(embed_dim // 2, grid[1])
+
+    # concatenate height and width to form final 2d embedding
+    return torch.cat([emb_h, emb_w], dim=1)
