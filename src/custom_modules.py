@@ -16,7 +16,20 @@ class PatchEmbedding(nn.Module):
         x = self.embed(x)           # (B, D, H, W)
         x = x.flatten(2)            # (B, D, T)
         return x.transpose(1, 2)    # (B, T, D)
-    
+
+class TransformerBlock(nn.Module):
+    def __init__(self, embed_dim, heads, mlp_ratio):
+        super().__init__()
+        self.norm1 = nn.LayerNorm(embed_dim)
+        self.mha = MultiHeadAttention(embed_dim, heads)
+        self.norm2 = nn.LayerNorm(embed_dim)
+        self.mlp = MLP(embed_dim, int(mlp_ratio * embed_dim))
+
+    def forward(self, x): # (B, T, embed_dim)
+        x = x + self.mha(self.norm1(x))
+        x = x + self.mlp(self.norm2(x))
+        return x # (B, T, embed_dim)
+
 class MultiHeadAttention(nn.Module):
     def __init__(self, embed_dim, heads):
         assert embed_dim % heads == 0
@@ -48,16 +61,3 @@ class MLP(nn.Module):
         x = self.act(self.linear1(x))   # (B, T, hidden_dim)
         x = self.linear2(x)             # (B, T, dim)
         return x
-
-class TransformerBlock(nn.Module):
-    def __init__(self, embed_dim, heads, mlp_ratio):
-        super().__init__()
-        self.norm1 = nn.LayerNorm(embed_dim)
-        self.mha = MultiHeadAttention(embed_dim, heads)
-        self.norm2 = nn.LayerNorm(embed_dim)
-        self.mlp = MLP(embed_dim, int(mlp_ratio * embed_dim))
-
-    def forward(self, x): # (B, T, embed_dim)
-        x = x + self.mha(self.norm1(x))
-        x = x + self.mlp(self.norm2(x))
-        return x # (B, T, embed_dim)
