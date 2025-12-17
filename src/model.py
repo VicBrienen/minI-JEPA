@@ -3,6 +3,17 @@ from torch import nn
 from custom_modules import PatchEmbedding, TransformerBlock
 from helper import get_2d_pos_embed, gather_tokens
 
+class JEPA(nn.Module):
+    def __init__(self, encoder, predictor):
+        super().__init__()
+        self.encoder = encoder
+        self.predictor = predictor
+
+    def forward(self, x, visible_idx, masked_idx):
+        x = self.encoder(x, visible_idx)
+        x = self.predictor(x, visible_idx, masked_idx)
+        return x
+
 class Encoder(nn.Module):
     def __init__(self, in_channels, img_size, patch_size, embed_dim, depth, heads, mlp_ratio):
         super().__init__()
