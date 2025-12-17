@@ -28,13 +28,6 @@ def get_2d_pos_embed(embed_dim, grid_size):
     # concatenate height and width to form final 2d embedding
     return torch.cat([emb_h, emb_w], dim=1)
 
-def gather_pos_embed(self, idx):
-    # patch indices per sample (B, K)
-    B, K = idx.shape
-
-    # expand positional embeddings across batch (B, T, D)
-    pos = self.pos_embed.expand(B, -1, -1)
-
-    # prepare indices and gather positional embeddings along token dimension
-    idx = idx.unsqueeze(-1).expand(-1, -1, pos.size(-1))
-    return torch.gather(pos, dim=1, index=idx)
+def gather_tokens(x, idx):
+    idx = idx.unsqueeze(-1).expand(-1, -1, x.size(-1))
+    return torch.gather(x, dim=1, index=idx)
