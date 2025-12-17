@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from custom_modules import PatchEmbedding, TransformerBlock
-from helper import get_2d_pos_embed, gather_pos_embed
+from helper import get_2d_pos_embed, gather_tokens
 
 class Encoder(nn.Module):
     def __init__(self, in_channels, img_size, patch_size, embed_dim, depth, heads, mlp_ratio):
@@ -22,9 +22,13 @@ class Encoder(nn.Module):
 
         self.norm = nn.LayerNorm(embed_dim)
 
-    def forward(self, x):
+    def forward(self, x, visible_idx=None):
         # patch embedding + positional embedding
         x = self.patch_embed(x) + self.pos_embed
+
+        # select visible patch tokens
+        if visible_idx is not None:
+            x = gather_tokens(x, visible_idx)
 
         # pass trough transformer blocks
         for block in self.blocks:
@@ -64,13 +68,16 @@ class Predictor(nn.Module):
         # reduce embedding dimension for predictor
         x = self.predictor_embed(x_visible)
 
+        # expand positional embeddings to batch
+        pos = self.pos_embed.expand(B, -1, -1)
+
         # add positional embedding to visible tokens
-        pos_visible = gather_pos_embed(self.pos_embed, visible_idx)
+        pos_visible = gather_tokens(pos, visible_idx)
         x = x + pos_visible
 
         # create mask tokens and add positional embedding
         mask_tokens = self.mask_token.expand(B, masked_idx.shape[1], -1)
-        pos_masked = gather_pos_embed(self.pos_embed, masked_idx)
+        pos_masked = gather_tokens(pos, masked_idx)
         mask_tokens = mask_tokens + pos_masked
 
         # concatenate visible and masked tokens
