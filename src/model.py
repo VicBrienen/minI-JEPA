@@ -1,7 +1,7 @@
 import torch
 from torch import nn
-from custom_modules import PatchEmbedding, TransformerBlock
-from helper import get_2d_pos_embed, gather_tokens
+from .custom_modules import PatchEmbedding, TransformerBlock
+from .helper import get_2d_pos_embed, gather_tokens
 
 class JEPA(nn.Module):
     def __init__(self, encoder, predictor):
