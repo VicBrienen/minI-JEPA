@@ -32,6 +32,7 @@ class TransformerBlock(nn.Module):
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, embed_dim, heads):
+        super().__init__()
         assert embed_dim % heads == 0
 
         self.embed_dim = embed_dim
