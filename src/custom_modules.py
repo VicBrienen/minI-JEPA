@@ -46,7 +46,7 @@ class MultiHeadAttention(nn.Module):
         B, T, D = x.shape
         qkv = self.qkv_proj(x)                                              # (B, T, 3*embed_dim)
         qkv = qkv.view(B, T, 3, self.heads, self.head_dim).transpose(1, 3)  # (B, heads, T, 3, head_dim)
-        q, k, v = qkv.unbind(dim=3)                                         # (B, heads, T, head_dim)
+        q, k, v = qkv.unbind(dim=2)                                         # (B, heads, T, head_dim)
         attn = F.scaled_dot_product_attention(q, k, v, is_causal=False)     # (B, heads, T, head_dim)
         attn = attn.transpose(1, 2).reshape(B, T, D)                        # (B, T, embed_dim)
         return self.out_proj(attn)                                          # (B, T, embed_dim)
