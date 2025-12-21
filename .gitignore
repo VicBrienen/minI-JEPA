@@ -3,8 +3,6 @@ __pycache__/
 *.so
 .DS_Store
 .vscode/
-.ipynb_checkpoints/
-*.ipynb
 /data/
 tiny-imagenet-200/
 tiny-imagenet-200.zip
