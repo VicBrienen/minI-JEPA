@@ -31,3 +31,8 @@ def get_2d_pos_embed(embed_dim, grid_size):
 def gather_tokens(x, idx):
     idx = idx.unsqueeze(-1).expand(-1, -1, x.size(-1))
     return torch.gather(x, dim=1, index=idx)
+
+@torch.no_grad()
+def update_ema(student, teacher, decay):
+    for p_s, p_t in zip(student.parameters(), teacher.parameters()):
+        p_t.data.mul_(decay).add_(p_s.data * (1.0 - decay))
